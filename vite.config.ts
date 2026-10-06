@@ -6,6 +6,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 // base './' pozwala hostować build w dowolnym podkatalogu (np. GitHub Pages /nous/)
 export default defineConfig({
   base: './',
+  define: {
+    // znacznik wersji widoczny w „Twoich mapach” (data i godzina builda, UTC)
+    __APP_BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
+  },
   plugins: [
     react(),
     tailwindcss(),

@@ -258,6 +258,9 @@ export function MapsSheet() {
         <IconShieldCheck size={15} stroke={1.75} style={{ color: 'var(--c-sage)' }} />
         Dane zostają tylko na tym urządzeniu. Bez kont, bez chmury.
       </div>
+      <div style={{ fontSize: 11, color: 'var(--faint)', marginTop: 12, fontVariantNumeric: 'tabular-nums' }}>
+        Nous · wersja {__APP_BUILD__} · okno {window.innerWidth}×{window.innerHeight} · ekran {screen.width}×{screen.height}
+      </div>
     </Sheet>
   )
 }
