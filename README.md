@@ -58,7 +58,18 @@ Aplikacja działa pod adresem http://localhost:5173.
 
 Tak uruchomiona aplikacja działa tylko, gdy Mac jest włączony. Przez zwykłe `http` nie działa też tryb offline. To dobra droga do testów, nie do codziennego używania.
 
-### Sposób B: na stałe, za darmo, z trybem offline (zalecany)
+### Twoja wersja na stałe
+
+Aplikacja jest opublikowana pod adresem **https://stan719.github.io/nous/**. Kod leży w repozytorium https://github.com/stan719/nous.
+
+Na iPhonie:
+1. Otwórz adres w **Safari**. Musi to być Safari, nie Chrome; tylko Safari dodaje aplikacje do ekranu początkowego z trybem offline.
+2. Stuknij **Udostępnij** (kwadrat ze strzałką), przewiń w dół i wybierz **Do ekranu początkowego → Dodaj**.
+3. Uruchamiaj Nous z nowej ikony. Działa na pełnym ekranie i bez internetu.
+
+Aktualizacje: każdy `git push` na gałąź `main` sam uruchamia testy i publikuje nową wersję (zakładka Actions w repozytorium). Aplikacja na iPhonie pobierze ją przy następnym uruchomieniu z internetem; Twoje mapy zostają nietknięte.
+
+### Sposób B: na stałe, za darmo, z trybem offline (opis ogólny)
 
 Pliki aplikacji muszą być raz dostarczone przez HTTPS. Najprościej przez darmowe **GitHub Pages**. Serwer hostuje wtedy tylko kod aplikacji, a Twoje mapy nigdy nie opuszczają iPhone'a.
 
