@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nous — makiety</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #131315;
+    --raised: #1a1a1d;
+    --raised-2: #222226;
+    --line: rgba(255,255,255,.08);
+    --line-strong: rgba(255,255,255,.15);
+    --ink: #f3f0ea;
+    --ink-muted: #a8a49c;
+    --ink-faint: #75726c;
+    --gold: #d8b77a;
+    --alert: #f2836b;
+    --c-sage: #8cc39b; --c-sky: #7fb5e8; --c-iris: #ab9cf5; --c-rose: #ec9ab4;
+    --c-amber: #e9bb69; --c-coral: #ef8f72; --c-ink: #d9d5ce;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #050506; font-family: Geist, system-ui, sans-serif; color: var(--ink); padding: 48px 40px; }
+  .row { display: flex; gap: 40px; align-items: flex-start; }
+  .cap { font-size: 13px; color: #8a867f; margin: 18px 0 0 6px; }
+  .cap b { color: var(--ink); font-weight: 500; }
+  .phone { width: 390px; height: 844px; border-radius: 56px; background: var(--bg); position: relative; overflow: hidden;
+           box-shadow: 0 0 0 10px #1c1c1f, 0 0 0 11px #2c2c30, 0 40px 80px rgba(0,0,0,.6); }
+  .status { position: absolute; top: 0; left: 0; right: 0; height: 54px; display: flex; justify-content: space-between;
+            align-items: center; padding: 6px 34px 0 46px; font-weight: 600; font-size: 16px; z-index: 30; }
+  .status .island { position: absolute; left: 50%; top: 11px; width: 124px; height: 36px; margin-left: -62px; background: #000; border-radius: 20px; }
+  .status .icons { display: flex; gap: 6px; align-items: center; }
+  .home { position: absolute; bottom: 8px; left: 50%; width: 136px; height: 5px; margin-left: -68px; background: var(--ink); border-radius: 3px; z-index: 40; opacity: .9; }
+
+  /* canvas */
+  .canvas { position: absolute; inset: 0;
+            background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.2px); background-size: 24px 24px; }
+  .glow { position: absolute; width: 420px; height: 420px; left: -15px; top: 220px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(216,183,122,.10), transparent 62%); pointer-events: none; }
+  svg.edges { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .node { position: absolute; transform: translate(-50%,-50%); white-space: nowrap; display: flex; align-items: center; gap: 8px;
+          padding: 9px 14px 9px 12px; border-radius: 16px; background: var(--surface); font-size: 14.5px; font-weight: 500;
+          border: 1px solid color-mix(in oklab, var(--c) 34%, transparent);
+          box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+  .node .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c); flex: none; }
+  .node.branch { font-size: 15.5px; padding: 11px 16px 11px 13px; border-radius: 18px;
+                 background: color-mix(in oklab, var(--c) 12%, var(--surface)); }
+  .node.root { padding: 14px 26px; border-radius: 999px; background: var(--ink); color: #0b0b0c; border: 0;
+               font-family: 'Instrument Serif', serif; font-size: 27px; font-weight: 400; letter-spacing: -.01em;
+               box-shadow: 0 0 0 6px rgba(243,240,234,.06), 0 0 0 14px rgba(243,240,234,.03), 0 18px 50px rgba(0,0,0,.6); }
+  .node.sel { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--gold), 0 10px 30px rgba(0,0,0,.5); }
+  .prio { display: inline-flex; gap: 2px; align-items: flex-end; margin-left: 2px; }
+  .prio i { width: 3px; border-radius: 1px; background: var(--line-strong); display: block; }
+  .prio i:nth-child(1){height:5px} .prio i:nth-child(2){height:8px} .prio i:nth-child(3){height:11px}
+  .prio.p1 i:nth-child(1), .prio.p2 i:nth-child(-n+2), .prio.p3 i { background: var(--ink); }
+  .prio.p3 i { background: var(--gold); }
+
+  /* top bar */
+  .top { position: absolute; top: 54px; left: 0; right: 0; padding: 8px 20px 14px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 20;
+         background: linear-gradient(var(--bg) 55%, transparent); }
+  .title { font-family: 'Instrument Serif', serif; font-size: 34px; line-height: 1; letter-spacing: -.01em; display: flex; align-items: center; gap: 6px; }
+  .title svg { width: 18px; height: 18px; color: var(--ink-muted); margin-top: 6px; }
+  .sub { font-size: 12.5px; color: var(--ink-muted); margin-top: 7px; display: flex; align-items: center; gap: 6px; }
+  .sub .live { width: 6px; height: 6px; border-radius: 50%; background: var(--c-sage); }
+  .iconbtn { width: 42px; height: 42px; border-radius: 50%; background: var(--raised); border: 1px solid var(--line);
+             display: grid; place-items: center; color: var(--ink); }
+  .iconbtn svg { width: 19px; height: 19px; stroke-width: 1.75; }
+
+  /* dock */
+  .dock { position: absolute; left: 16px; right: 16px; bottom: 30px; height: 64px; border-radius: 32px; z-index: 25;
+          background: rgba(26,26,29,.78); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px);
+          border: 1px solid var(--line-strong); display: flex; align-items: center; padding: 0 8px; gap: 6px;
+          box-shadow: 0 20px 50px rgba(0,0,0,.55); }
+  .seg { display: flex; background: rgba(0,0,0,.35); border-radius: 999px; padding: 4px; }
+  .seg span { display: flex; align-items: center; gap: 7px; padding: 9px 15px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--ink-muted); }
+  .seg span.on { background: var(--ink); color: #0b0b0c; }
+  .seg svg { width: 16px; height: 16px; }
+  .fab { margin-left: auto; width: 48px; height: 48px; border-radius: 50%; background: var(--gold); color: #1a1408; display: grid; place-items: center; }
+  .fab svg { width: 22px; height: 22px; stroke-width: 2; }
+  .ctx { display: flex; width: 100%; justify-content: space-between; align-items: center; }
+  .ctx .a { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; color: var(--ink-muted); width: 62px; }
+  .ctx .a svg { width: 20px; height: 20px; color: var(--ink); stroke-width: 1.75; }
+  .ctx .sw { width: 20px; height: 20px; border-radius: 50%; background: var(--c-amber); box-shadow: 0 0 0 2px var(--raised), 0 0 0 3px var(--line-strong); }
+  .zoom { position: absolute; right: 16px; bottom: 108px; z-index: 22; display: flex; gap: 8px; }
+  .chip { height: 34px; padding: 0 12px; border-radius: 999px; background: var(--raised); border: 1px solid var(--line); font-size: 12.5px;
+          color: var(--ink-muted); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+  .chip svg { width: 15px; height: 15px; }
+
+  /* sheet */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.55); z-index: 26; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 27; background: var(--raised); border-radius: 30px 30px 0 0;
+           border-top: 1px solid var(--line-strong); padding: 10px 20px 40px; }
+  .grab { width: 38px; height: 5px; border-radius: 3px; background: var(--line-strong); margin: 0 auto 16px; }
+  .label { font-size: 12.5px; color: var(--ink-muted); margin: 18px 0 9px; }
+  .field { background: var(--bg); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; }
+  .field.big { font-size: 21px; font-weight: 500; letter-spacing: -.01em; }
+  .field.note { font-size: 14.5px; color: var(--ink-muted); line-height: 1.45; min-height: 74px; }
+  .swatches { display: flex; justify-content: space-between; }
+  .swatches i { width: 36px; height: 36px; border-radius: 50%; background: var(--c); display: block; }
+  .swatches i.on { box-shadow: 0 0 0 3px var(--raised), 0 0 0 5px var(--ink); }
+  .swatches i.none { background: transparent; border: 1.5px dashed var(--line-strong); }
+  .pseg { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+  .pseg > span { flex: 1; text-align: center; padding: 8px 0 7px; flex-direction: column; gap: 5px !important; border-radius: 999px; font-size: 12.5px; color: var(--ink-muted); display: flex; justify-content: center; align-items: center; }
+  .pseg > span.on { background: var(--raised-2); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .actions { display: flex; gap: 10px; margin-top: 22px; }
+  .btn { height: 50px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 500; flex: 1; }
+  .btn svg { width: 18px; height: 18px; }
+  .btn.primary { background: var(--ink); color: #0b0b0c; }
+  .btn.ghost { background: var(--raised-2); border: 1px solid var(--line); }
+  .btn.danger { flex: none; width: 50px; background: rgba(242,131,107,.12); color: var(--alert); }
+
+  /* list */
+  .list { position: absolute; top: 150px; left: 0; right: 0; bottom: 0; padding: 0 12px 0 14px; }
+  .li { display: flex; align-items: center; height: 46px; position: relative; padding-right: 8px; border-radius: 14px; }
+  .li .chev { width: 22px; height: 22px; display: grid; place-items: center; color: var(--ink-muted); flex: none; }
+  .li .chev svg { width: 15px; height: 15px; stroke-width: 2; }
+  .li .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c); margin: 0 10px 0 4px; flex: none; }
+  .li .t { font-size: 15.5px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .li.l0 .t { font-family: 'Instrument Serif', serif; font-size: 23px; }
+  .li.l1 .t { font-weight: 500; }
+  .li .cnt { font-size: 12px; color: var(--ink-muted); background: var(--raised); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; margin-left: 8px; font-variant-numeric: tabular-nums; }
+  .li.sel { background: var(--raised); box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .li.done .t { color: var(--ink-faint); text-decoration: line-through; }
+  .guide { position: absolute; top: -2px; bottom: -2px; width: 1.5px; border-radius: 1px; background: color-mix(in oklab, var(--c) 40%, transparent); }
+  .addrow { display: flex; align-items: center; gap: 8px; height: 42px; color: var(--ink-faint); font-size: 14.5px; }
+  .addrow svg { width: 16px; height: 16px; }
+
+  /* maps sheet */
+  .mapcard { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 22px; background: var(--bg); border: 1px solid var(--line); margin-bottom: 10px; }
+  .mapcard.on { border-color: var(--line-strong); background: var(--raised-2); }
+  .thumb { width: 52px; height: 52px; border-radius: 16px; background: #0f0f11; border: 1px solid var(--line); position: relative; overflow: hidden; flex: none; }
+  .mapcard .n { font-family: 'Instrument Serif', serif; font-size: 22px; line-height: 1.1; }
+  .mapcard .m { font-size: 12.5px; color: var(--ink-muted); margin-top: 3px; }
+  .mapcard .ck { margin-left: auto; color: var(--gold); }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tile { background: var(--bg); border: 1px solid var(--line); border-radius: 22px; padding: 16px; }
+  .tile svg { width: 22px; height: 22px; color: var(--gold); }
+  .tile b { display: block; font-weight: 500; font-size: 15px; margin-top: 14px; }
+  .tile span { font-size: 12px; color: var(--ink-muted); }
+  .note-s { font-size: 12px; color: var(--ink-muted); margin-top: 14px; display: flex; gap: 8px; align-items: center; }
+  .note-s svg { width: 15px; height: 15px; color: var(--c-sage); }
+  h3 { font-family: 'Instrument Serif', serif; font-weight: 400; font-size: 28px; letter-spacing: -.01em; }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+
+<template id="statusbar">
+  <div class="status"><span>9:41</span><div class="island"></div>
+    <div class="icons"><i data-lucide="signal" style="width:17px;height:17px"></i><i data-lucide="wifi" style="width:17px;height:17px"></i><i data-lucide="battery-full" style="width:24px;height:24px"></i></div>
+  </div><div class="home"></div>
+</template>
+
+<script>
+const N = [ // id, parent, label, x, y, color, prio
+  ['r', null, 'Plan 2027', 195, 440, 'ink', 0],
+  ['p', 'r', 'Praca', 108, 322, 'sky', 3],
+  ['p1','p', 'Nowa aplikacja', 96, 236, 'sky', 2],
+  ['p2','p', 'Kurs TypeScript', 160, 176, 'sky', 0],
+  ['z', 'r', 'Zdrowie', 300, 318, 'sage', 2],
+  ['z1','z', 'Sen 7h', 318, 232, 'sage', 0],
+  ['z2','z', 'Bieganie 3×', 372, 268, 'sage', 1],
+  ['t', 'r', 'Podróże', 102, 568, 'amber', 1],
+  ['t1','t', 'Japonia — kwiecień', 110, 660, 'amber', 3],
+  ['t2','t', 'Weekend w Tatrach', 128, 724, 'amber', 0],
+  ['f', 'r', 'Finanse', 300, 566, 'iris', 2],
+  ['f1','f', 'Poduszka 6 mies.', 316, 650, 'iris', 0],
+];
+const byId = Object.fromEntries(N.map(n => [n[0], n]));
+const prio = p => p ? `<span class="prio p${p}"><i></i><i></i><i></i></span>` : '';
+
+function canvasHTML(selected) {
+  let paths = '';
+  for (const n of N) if (n[1]) {
+    const a = byId[n[1]], isRoot = !a[1];
+    const [x1,y1,x2,y2] = [a[3],a[4],n[3],n[4]], my = (y1+y2)/2;
+    paths += `<path d="M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}" stroke="var(--c-${n[5]})" stroke-opacity="${isRoot?.6:.42}" stroke-width="${isRoot?2.4:1.6}" fill="none" stroke-linecap="round"/>`;
+  }
+  const nodes = N.map(n => {
+    const cls = !n[1] ? 'root' : byId[n[1]][1] ? '' : 'branch';
+    const inner = cls === 'root' ? n[2] : `<span class="dot"></span>${n[2]}${prio(n[6])}`;
+    return `<div class="node ${cls} ${n[0]===selected?'sel':''}" style="left:${n[3]}px;top:${n[4]}px;--c:var(--c-${n[5]})">${inner}</div>`;
+  }).join('');
+  return `<div class="canvas"></div><div class="glow"></div><svg class="edges">${paths}</svg>${nodes}`;
+}
+const topBar = (sub) => `<div class="top"><div><div class="title">Plan 2027<i data-lucide="chevron-down"></i></div>
+  <div class="sub"><span class="live"></span>${sub}</div></div>
+  <div style="display:flex;gap:8px"><div class="iconbtn"><i data-lucide="search"></i></div><div class="iconbtn"><i data-lucide="scan"></i></div><div class="iconbtn"><i data-lucide="ellipsis"></i></div></div></div>`;
+const dockNormal = (view) => `<div class="dock"><div class="seg">
+  <span class="${view==='c'?'on':''}"><i data-lucide="waypoints"></i>Kanwa</span>
+  <span class="${view==='l'?'on':''}"><i data-lucide="list-tree"></i>Lista</span></div>
+  <div class="fab"><i data-lucide="plus"></i></div></div>`;
+
+const screens = [];
+
+// 1 — canvas with selection
+screens.push(['Kanwa', 'zaznaczony węzeł → pasek akcji w docku', `
+  ${canvasHTML('t1')}
+  ${topBar('12 myśli · zapisano na urządzeniu')}
+  <div class="dock"><div class="ctx">
+    <div class="a"><i data-lucide="corner-down-right"></i>Dziecko</div>
+    <div class="a"><i data-lucide="plus"></i>Obok</div>
+    <div class="a"><span class="sw"></span>Kolor</div>
+    <div class="a"><i data-lucide="pencil"></i>Edytuj</div>
+    <div class="a"><i data-lucide="x"></i>Zamknij</div>
+  </div></div>`]);
+
+// 2 — edit sheet
+screens.push(['Edycja', 'tap na węzeł → arkusz edycji', `
+  ${canvasHTML('t1')}
+  ${topBar('12 myśli · zapisano na urządzeniu')}
+  <div class="scrim"></div>
+  <div class="sheet"><div class="grab"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="sub" style="margin:0"><span class="live" style="background:var(--c-amber)"></span>Podróże › Japonia</div>
+      <div class="chip" style="height:30px">Gotowe</div></div>
+    <div class="label">Myśl</div>
+    <div class="field big">Japonia — kwiecień</div>
+    <div class="label">Notatka</div>
+    <div class="field note">Kioto + Osaka, sakura ok. 5–12.04. Sprawdzić JR Pass i ryokan w Hakone.</div>
+    <div class="label">Kolor gałęzi</div>
+    <div class="swatches">
+      <i class="none"></i><i style="--c:var(--c-ink)"></i><i style="--c:var(--c-sky)"></i><i style="--c:var(--c-sage)"></i>
+      <i class="on" style="--c:var(--c-amber)"></i><i style="--c:var(--c-coral)"></i><i style="--c:var(--c-rose)"></i><i style="--c:var(--c-iris)"></i></div>
+    <div class="label">Priorytet</div>
+    <div class="pseg"><span><span class="prio"><i style="opacity:0"></i><i style="opacity:0"></i><i style="height:1.5px"></i></span>Brak</span><span>${prio(1)}Niski</span><span>${prio(2)}Średni</span><span class="on">${prio(3)}Wysoki</span></div>
+    <div class="actions">
+      <div class="btn primary"><i data-lucide="corner-down-right"></i>Dodaj dziecko</div>
+      <div class="btn ghost"><i data-lucide="plus"></i>Obok</div>
+      <div class="btn danger"><i data-lucide="trash-2"></i></div></div>
+  </div>`]);
+
+// 3 — list
+const rows = [ // level, label, color, prio, count, open, extra
+  [0,'Plan 2027','ink',0,11,true],
+  [1,'Praca','sky',3,2,true],
+  [2,'Nowa aplikacja','sky',2,0],
+  [2,'Kurs TypeScript','sky',0,0],
+  [1,'Zdrowie','sage',2,2,false],
+  [1,'Podróże','amber',1,2,true],
+  [2,'Japonia — kwiecień','amber',3,3,true,'sel'],
+  [3,'JR Pass','amber',0,0],
+  [3,'Ryokan w Hakone','amber',0,0],
+  [3,'Lista sakura spotów','amber',0,0],
+  [2,'Weekend w Tatrach','amber',0,0],
+  [1,'Finanse','iris',2,1,false],
+];
+const listHTML = rows.map(([lv,t,c,p,cnt,open,ex]) => {
+  let g = '';
+  for (let i = 1; i < lv; i++) g += `<span class="guide" style="left:${i*22+2}px;--c:var(--c-${c})"></span>`;
+  const chev = cnt ? `<i data-lucide="${open?'chevron-down':'chevron-right'}"></i>` : '';
+  return `<div class="li l${lv} ${ex||''}" style="padding-left:${lv*22}px;--c:var(--c-${c})">${g}
+    <span class="chev">${chev}</span>${lv?'<span class="dot"></span>':''}<span class="t">${t}</span>${prio(p)}${cnt&&!open?`<span class="cnt">${cnt}</span>`:''}</div>`;
+}).join('');
+screens.push(['Lista', 'outliner: wcięcia, zwijanie, przeciąganie', `
+  ${topBar('12 myśli · zapisano na urządzeniu')}
+  <div class="list">${listHTML}
+    <div class="addrow" style="padding-left:48px"><i data-lucide="plus"></i>Nowa gałąź</div></div>
+  ${dockNormal('l')}`]);
+
+// 4 — maps + backup
+screens.push(['Mapy i kopia', 'wiele map, eksport/import .json', `
+  ${canvasHTML(null)}
+  ${topBar('12 myśli · zapisano na urządzeniu')}
+  <div class="scrim"></div>
+  <div class="sheet"><div class="grab"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3>Twoje mapy</h3>
+      <div class="iconbtn" style="background:var(--ink);color:#0b0b0c;border:0"><i data-lucide="plus"></i></div></div>
+    <div class="mapcard on"><div class="thumb">${thumb(['sky','sage','amber','iris'])}</div><div><div class="n">Plan 2027</div><div class="m">12 myśli · edytowano teraz</div></div><i class="ck" data-lucide="check"></i></div>
+    <div class="mapcard"><div class="thumb">${thumb(['rose','coral','sky'])}</div><div><div class="n">Pomysły na aplikacje</div><div class="m">34 myśli · wczoraj</div></div></div>
+    <div class="mapcard"><div class="thumb">${thumb(['iris','sage'])}</div><div><div class="n">Książki 2026</div><div class="m">19 myśli · 3 paź</div></div></div>
+    <div class="label" style="margin-top:20px">Kopia zapasowa</div>
+    <div class="tiles">
+      <div class="tile"><i data-lucide="arrow-up-from-line"></i><b>Eksportuj</b><span>wszystkie mapy do .json</span></div>
+      <div class="tile"><i data-lucide="arrow-down-to-line"></i><b>Importuj</b><span>z pliku .json</span></div></div>
+    <div class="note-s"><i data-lucide="shield-check"></i>Dane zostają tylko na tym iPhonie. Bez kont, bez chmury.</div>
+  </div>`]);
+
+function thumb(cs) {
+  const pos = [[12,12],[40,14],[12,40],[40,38]];
+  let s = `<svg width="52" height="52" style="position:absolute;inset:0">`;
+  cs.forEach((c,i) => s += `<path d="M26,26 L${pos[i][0]},${pos[i][1]}" stroke="var(--c-${c})" stroke-opacity=".6" stroke-width="1.5"/><circle cx="${pos[i][0]}" cy="${pos[i][1]}" r="4" fill="var(--c-${c})"/>`);
+  return s + `<circle cx="26" cy="26" r="6" fill="var(--ink)"/></svg>`;
+}
+
+const tpl = document.getElementById('statusbar').innerHTML;
+document.getElementById('row').innerHTML = screens.map(([t,d,h],i) =>
+  `<div><div class="phone" id="s${i+1}">${h}${tpl}</div><div class="cap"><b>${i+1}. ${t}</b> — ${d}</div></div>`).join('');
+lucide.createIcons();
+</script>
+</body>
+</html>
