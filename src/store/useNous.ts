@@ -30,6 +30,10 @@ interface Data {
   currentMapId: string | null
   view: View
   lastExportAt: number | null
+  /** pierwsze uruchomienie aplikacji (licznik przypomnienia o kopii) */
+  installedAt: number | null
+  backupReminder: boolean
+  backupSnoozedUntil: number | null
 }
 
 interface UI {
@@ -75,6 +79,8 @@ interface Actions {
   // kopia
   importBackup: (data: BackupFile, mode: 'add' | 'replace') => void
   markExported: () => void
+  snoozeBackup: (days: number) => void
+  setBackupReminder: (on: boolean) => void
   undo: () => void
   redo: () => void
 }
@@ -110,6 +116,9 @@ export const useNous = create<NousState>()(
           currentMapId: null,
           view: 'canvas',
           lastExportAt: null,
+          installedAt: null,
+          backupReminder: true,
+          backupSnoozedUntil: null,
           hydrated: false,
           selectedId: null,
           sheet: null,
@@ -255,7 +264,9 @@ export const useNous = create<NousState>()(
             })
             get().showToast(mode === 'add' ? 'Zaimportowano kopię' : 'Przywrócono kopię', true)
           },
-          markExported: () => set({ lastExportAt: Date.now() }),
+          markExported: () => set({ lastExportAt: Date.now(), backupSnoozedUntil: null }),
+          snoozeBackup: (days) => set({ backupSnoozedUntil: Date.now() + days * 86_400_000 }),
+          setBackupReminder: (on) => set({ backupReminder: on, backupSnoozedUntil: null }),
           undo: () => {
             useNous.temporal.getState().undo()
             const { selectedId, nodes, sheet } = get()
@@ -293,6 +304,9 @@ export const useNous = create<NousState>()(
         currentMapId: s.currentMapId,
         view: s.view,
         lastExportAt: s.lastExportAt,
+        installedAt: s.installedAt,
+        backupReminder: s.backupReminder,
+        backupSnoozedUntil: s.backupSnoozedUntil,
       }),
       onRehydrateStorage: () => () => {
         const s = useNous.getState()
@@ -301,6 +315,7 @@ export const useNous = create<NousState>()(
           useNous.setState({ maps: { [map.id]: map }, nodes, currentMapId: map.id })
         }
         fixCurrentMap()
+        if (!useNous.getState().installedAt) useNous.setState({ installedAt: Date.now() })
         useNous.setState({ hydrated: true })
         useNous.temporal.getState().clear()
       },

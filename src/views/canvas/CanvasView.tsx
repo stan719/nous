@@ -32,7 +32,9 @@ function safeArea(el: HTMLElement) {
   const bottom = parseFloat(cs.getPropertyValue('--safe-bottom')) || 0
   const w = el.clientWidth
   const h = el.clientHeight
-  return { left: 16, right: w - 16, top: top + 110, bottom: h - Math.max(16, bottom) - 84 }
+  // dock stoi na wysokości --dock-bottom (patrz index.css) i ma 64 px
+  const dockTop = h - Math.max(10, bottom - 20) - 64
+  return { left: 16, right: w - 16, top: top + 110, bottom: dockTop - 12 }
 }
 
 type Gesture =
@@ -216,16 +218,20 @@ export function CanvasView() {
     if (focusRequest && useNous.getState().nodes[focusRequest.id]?.mapId === mapId) centerOn(focusRequest.id)
   }, [focusRequest, mapId, centerOn])
 
-  // zaznaczony węzeł poza ekranem (np. świeżo dodany) → przewiń do niego
+  // świeżo utworzona myśl poza ekranem (albo pod dockiem) → przesuń kanwę tylko o tyle,
+  // ile trzeba, żeby ją pokazać. Zwykłe stuknięcie w węzeł nigdy nie rusza kanwy.
   useEffect(() => {
     const el = containerRef.current
     const n = selectedId ? useNous.getState().nodes[selectedId] : null
-    if (!el || !n) return
+    if (!el || !n || n.createdAt < mountedAt.current || Date.now() - n.createdAt > 1500) return
     const a = safeArea(el)
     const { x, y, k } = vp.current
     const sx = n.x * k + x
     const sy = n.y * k + y
-    if (sx < a.left + 40 || sx > a.right - 40 || sy < a.top + 20 || sy > a.bottom - 140) centerOn(n.id, k)
+    const m = 70 * k
+    const dx = sx < a.left + m ? a.left + m - sx : sx > a.right - m ? a.right - m - sx : 0
+    const dy = sy < a.top + m ? a.top + m - sy : sy > a.bottom - m ? a.bottom - m - sy : 0
+    if (dx || dy) animateTo({ k, x: x + dx, y: y + dy })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId])
 
@@ -534,7 +540,7 @@ export function CanvasView() {
       {!selectedId && (
         <div
           data-ui
-          style={{ position: 'absolute', right: 16, bottom: 'calc(max(16px, var(--safe-bottom)) + 76px)', zIndex: 22, display: 'flex', gap: 8 }}
+          style={{ position: 'absolute', right: 16, bottom: 'var(--above-dock)', zIndex: 22, display: 'flex', gap: 8 }}
         >
           <span className="chip-btn" aria-live="polite">
             {Math.round(k * 100)}%

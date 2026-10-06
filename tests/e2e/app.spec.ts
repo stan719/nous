@@ -37,7 +37,7 @@ test('dodanie dziecka z tytułem i notatką, widoczne na kanwie i liście', asyn
   expect(n.parentId).toBe((await nodeByTitle(page, 'Notatki')).id)
   await expect(page.locator(`[data-node-id="${n.id}"]`)).toContainText('Morze blisko')
 
-  await page.locator('body').click({ position: { x: 20, y: 400 } })
+  await page.keyboard.press('Escape') // odznacz węzeł
   await page.getByRole('tab', { name: 'Lista' }).click()
   await expect(page.getByTestId('list').getByText('Argumenty za przeprowadzką do Gdańska')).toBeVisible()
 })
@@ -234,4 +234,71 @@ test('eksport PDF: lista i mapa', async ({ page }) => {
   expect(file.suggestedFilename()).toBe('pierwsza-mapa-mapa.pdf')
   const { readFileSync } = await import('node:fs')
   expect(readFileSync(await file.path()).subarray(0, 5).toString()).toBe('%PDF-')
+})
+
+test('przypomnienie o kopii po 15 dniach: eksport jednym dotknięciem i „Jutro”', async ({ page }) => {
+  await start(page)
+  await page.evaluate(() => Object.defineProperty(navigator, 'canShare', { value: undefined, configurable: true }))
+  const reminder = page.getByRole('dialog', { name: 'Przypomnienie o kopii zapasowej' })
+  await page.waitForTimeout(1400)
+  await expect(reminder).toHaveCount(0) // świeża instalacja — jeszcze nie
+
+  const old = Date.now() - 16 * 86_400_000
+  await page.evaluate((t) => (window as unknown as { nous: { setState: (s: object) => void } }).nous.setState({ lastExportAt: t }), old)
+  await expect(reminder).toContainText('Ostatnia kopia 16 dni temu')
+  const download = page.waitForEvent('download')
+  await reminder.getByRole('button', { name: 'Eksportuj teraz' }).click()
+  await download
+  await expect(reminder).toHaveCount(0)
+  expect(await page.evaluate(() => (window as unknown as { nous: { getState: () => { lastExportAt: number } } }).nous.getState().lastExportAt)).toBeGreaterThan(old)
+
+  await page.evaluate((t) => (window as unknown as { nous: { setState: (s: object) => void } }).nous.setState({ lastExportAt: t }), old)
+  await reminder.getByRole('button', { name: 'Jutro' }).click()
+  await expect(reminder).toHaveCount(0)
+})
+
+test('stuknięcie węzła na dole ekranu nie przesuwa kanwy', async ({ page }) => {
+  await start(page)
+  const vp = () => page.evaluate(() => { const s = (window as unknown as { nous: { getState: () => Snap } }).nous.getState() as unknown as { viewports: Record<string, { x: number; y: number }>; currentMapId: string }; return { ...s.viewports[s.currentMapId] } })
+  const before = await vp()
+  // najniżej położony widoczny węzeł
+  const lowest = await page.evaluate(() => {
+    const els = [...document.querySelectorAll<HTMLElement>('[data-node-id]')].filter((e) => e.getBoundingClientRect().bottom < innerHeight - 90)
+    return els.sort((a, b) => b.getBoundingClientRect().top - a.getBoundingClientRect().top)[0].dataset.nodeId!
+  })
+  await page.locator(`[data-node-id="${lowest}"]`).click()
+  await page.waitForTimeout(700)
+  expect((await state(page)).nodes[lowest]).toBeDefined()
+  expect(await vp()).toEqual(before)
+})
+
+test('zsunięcie okienka edycji zapisuje zmiany i je zamyka', async ({ page }) => {
+  await start(page)
+  await tapNode(page, 'Gesty')
+  await page.getByRole('button', { name: 'Edytuj' }).click()
+  await page.locator('#f-title').fill('Gesty po zsunięciu')
+  await page.locator('#f-title').blur()
+  await page.waitForTimeout(600) // koniec animacji wjazdu okienka
+  const grab = (await page.locator('.sheet-grab').boundingBox())!
+  await page.mouse.move(grab.x + grab.width / 2, grab.y + grab.height / 2)
+  await page.mouse.down()
+  for (let i = 1; i <= 8; i++) await page.mouse.move(grab.x + grab.width / 2, grab.y + grab.height / 2 + i * 25)
+  await page.mouse.up()
+  await expect(page.getByRole('dialog', { name: 'Edycja myśli' })).toHaveCount(0)
+  expect(Object.values((await state(page)).nodes).some((n) => n.title === 'Gesty po zsunięciu')).toBe(true)
+})
+
+test('lekkie pociągnięcie okienka wraca na miejsce', async ({ page }) => {
+  await start(page)
+  await tapNode(page, 'Gesty')
+  await page.getByRole('button', { name: 'Edytuj' }).click()
+  await page.waitForTimeout(600)
+  const grab = (await page.locator('.sheet-grab').boundingBox())!
+  await page.mouse.move(grab.x + grab.width / 2, grab.y + 5)
+  await page.mouse.down()
+  await page.waitForTimeout(150)
+  await page.mouse.move(grab.x + grab.width / 2, grab.y + 45, { steps: 6 })
+  await page.waitForTimeout(150)
+  await page.mouse.up()
+  await expect(page.getByRole('dialog', { name: 'Edycja myśli' })).toBeVisible()
 })

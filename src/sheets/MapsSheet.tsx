@@ -1,6 +1,7 @@
 import { IconCheck, IconChevronRight, IconDots, IconFileExport, IconFileImport, IconFileTypePdf, IconPlus, IconShieldCheck } from '@tabler/icons-react'
 import { useMemo, useRef, useState } from 'react'
 import { exportBackup, readBackupFile } from '../lib/backup'
+import { BACKUP_EVERY_DAYS } from '../lib/reminder'
 import { primeKeyboard } from '../lib/ios'
 import { plural } from '../model/numerals'
 import { summarize } from '../model/schema'
@@ -134,7 +135,8 @@ export function MapsSheet() {
   const [confirmReplace, setConfirmReplace] = useState(false)
 
   const sorted = useMemo(() => Object.values(maps).sort((a, b) => b.updatedAt - a.updatedAt), [maps])
-  const stale = !lastExportAt || Date.now() - lastExportAt > 14 * DAY
+  const stale = !lastExportAt || Date.now() - lastExportAt > BACKUP_EVERY_DAYS * DAY
+  const reminderOn = useNous((s) => s.backupReminder)
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
@@ -228,6 +230,19 @@ export function MapsSheet() {
           </button>
         </div>
       )}
+      <button
+        className="toggle-row"
+        style={{ marginTop: 9 }}
+        onClick={() => s.setBackupReminder(!reminderOn)}
+        role="switch"
+        aria-checked={reminderOn}
+      >
+        <span style={{ flex: 1 }}>
+          <span style={{ fontSize: 14.5, display: 'block' }}>Przypominaj co {BACKUP_EVERY_DAYS} dni</span>
+          <span style={{ fontSize: 12, color: 'var(--muted)' }}>Karta z eksportem pojawi się przy otwarciu aplikacji</span>
+        </span>
+        <span className={`switch${reminderOn ? ' on' : ''}`} />
+      </button>
       <button className="map-card" style={{ marginTop: 9, padding: '12px 14px' }} onClick={() => s.openSheet({ type: 'pdf' })}>
         <IconFileTypePdf size={22} stroke={1.75} style={{ color: 'var(--gold)' }} />
         <span style={{ flex: 1, fontSize: 14.5 }}>Eksportuj bieżącą mapę do PDF</span>

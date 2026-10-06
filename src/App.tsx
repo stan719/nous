@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
+import { BackupReminder } from './components/BackupReminder'
 import { Dock } from './components/Dock'
 import { Toast } from './components/Toast'
 import { TopBar } from './components/TopBar'
-import { useKeyboardInset } from './lib/ios'
+import { useViewportMetrics } from './lib/ios'
 import { usePresence } from './lib/motion'
 import { EditSheet } from './sheets/EditSheet'
 import { MapsSheet } from './sheets/MapsSheet'
@@ -19,7 +20,7 @@ export function App() {
   const mapId = useNous((s) => s.currentMapId)
   const view = useNous((s) => s.view)
   const [sheet, leaving] = usePresence(useNous((s) => s.sheet), 260)
-  useKeyboardInset()
+  useViewportMetrics()
 
   // skróty na komputerze: ⌘Z / ⌘⇧Z
   useEffect(() => {
@@ -39,7 +40,7 @@ export function App() {
   if (!hydrated || !mapId) return <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)' }} />
 
   return (
-    <main style={{ position: 'fixed', inset: 0 }}>
+    <main className="app">
       <div className="view-enter" key={`${view}-${mapId}`}>
         {view === 'canvas' ? <CanvasView /> : <ListView />}
       </div>
@@ -52,6 +53,7 @@ export function App() {
         {sheet?.type === 'search' && <SearchSheet />}
         {sheet?.type === 'pdf' && <PdfSheet />}
       </SheetLeaving.Provider>
+      <BackupReminder />
       <Toast />
     </main>
   )

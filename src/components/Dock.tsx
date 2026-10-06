@@ -95,7 +95,7 @@ function ContextDock({ id }: { id: string }) {
     <>
       {panel && <div style={{ position: 'fixed', inset: 0, zIndex: 24 }} onClick={() => setPanel(null)} data-ui />}
       {panel === 'color' && (
-        <div className="popover" data-ui style={{ left: 16, right: 16, bottom: 'calc(max(16px, var(--safe-bottom)) + 76px)', padding: 14 }}>
+        <div className="popover" data-ui style={{ left: 16, right: 16, bottom: 'var(--above-dock)', padding: 14 }}>
           <Swatches
             value={node.color}
             onChange={(c) => {
@@ -106,7 +106,7 @@ function ContextDock({ id }: { id: string }) {
         </div>
       )}
       {panel === 'more' && (
-        <div className="popover" data-ui style={{ right: 16, bottom: 'calc(max(16px, var(--safe-bottom)) + 76px)' }}>
+        <div className="popover" data-ui style={{ right: 16, bottom: 'var(--above-dock)' }}>
           <button onClick={act(() => s.openSheet({ type: 'preview', id }))}>
             <IconEye size={19} stroke={1.75} />
             Podgląd

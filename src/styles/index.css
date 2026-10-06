@@ -27,6 +27,12 @@
   --sans: 'Geist Variable', -apple-system, system-ui, sans-serif;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* dock schodzi w zaokrąglenie ekranu, tuż nad paskiem Home (jak pływające paski w iOS 26) */
+  --dock-bottom: max(10px, calc(var(--safe-bottom) - 20px));
+  /* nad dockiem: popovery, toast, przypomnienie */
+  --above-dock: calc(var(--dock-bottom) + 76px);
+  /* pełna wysokość ekranu — ustawiana z JS (iOS w trybie aplikacji bywa niekonsekwentny) */
+  --app-h: 100lvh;
   --kb: 0px; /* wysokość klawiatury (visualViewport) */
 
   /* ruch: sprężyny (linear() z próbkowanej fizyki), rezerwa cubic-bezier dla starszych silników */
@@ -485,7 +491,7 @@
     position: absolute;
     left: 16px;
     right: 16px;
-    bottom: max(16px, var(--safe-bottom));
+    bottom: var(--dock-bottom);
     height: 64px;
     border-radius: 32px;
     z-index: 25;
@@ -594,14 +600,14 @@
 
   /* ---------- arkusze ---------- */
   .scrim {
-    position: fixed;
+    position: absolute;
     inset: 0;
     background: rgb(0 0 0 / 0.55);
     z-index: 40;
     animation: fade 0.3s ease-out;
   }
   .sheet {
-    position: fixed;
+    position: absolute;
     left: 0;
     right: 0;
     bottom: var(--kb);
@@ -611,7 +617,7 @@
     border-top: 1px solid var(--line-strong);
     display: flex;
     flex-direction: column;
-    max-height: calc(100dvh - var(--kb) - var(--safe-top) - 24px);
+    max-height: calc(var(--app-h) - var(--kb) - var(--safe-top) - 24px);
     animation: sheet-in 0.5s var(--spring-soft);
     transition: transform 0.4s var(--spring-soft);
   }
@@ -842,7 +848,7 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    padding: calc(var(--safe-top) + 112px) 10px calc(var(--safe-bottom) + 120px) 8px;
+    padding: calc(var(--safe-top) + 112px) 10px calc(var(--dock-bottom) + 110px) 8px;
   }
   .row {
     display: flex;
@@ -971,9 +977,9 @@
     opacity: 0.4;
   }
   .toast {
-    position: fixed;
+    position: absolute;
     left: 50%;
-    bottom: calc(max(16px, var(--safe-bottom)) + 78px);
+    bottom: calc(var(--above-dock) + 2px);
     transform: translateX(-50%);
     z-index: 60;
     background: var(--ink);
@@ -1130,6 +1136,58 @@
   to {
     rotate: 360deg;
   }
+}
+/* przypomnienie o kopii — karta nad dockiem */
+.reminder {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: var(--above-dock);
+  z-index: 35;
+  background: var(--raised);
+  border: 1px solid rgb(216 183 122 / 0.4);
+  border-radius: 26px;
+  padding: 16px;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.6);
+  animation: reminder-in 0.6s var(--spring-pop);
+}
+.reminder.leaving {
+  animation: reminder-out 0.24s var(--ease-exit) forwards;
+  pointer-events: none;
+}
+.reminder-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--gold);
+  background: rgb(216 183 122 / 0.12);
+}
+@keyframes reminder-in {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+    scale: 0.94;
+  }
+}
+@keyframes reminder-out {
+  to {
+    opacity: 0;
+    translate: 0 20px;
+    scale: 0.96;
+  }
+}
+/* kontener aplikacji: pełny ekran, także pod paskiem Home */
+.app {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--app-h);
+  overflow: hidden;
+  background: var(--bg);
 }
 .view-enter {
   position: absolute;
